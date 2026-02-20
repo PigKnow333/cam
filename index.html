@@ -5,52 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Live Cam</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
         * { margin: 0; padding: 0; }
-        body, html { width: 100%; height: 100%; background: #000; overflow: hidden; }
-        
-        /* Контейнер для видео */
-        .camera-container {
-            width: 100%;
-            height: 100%;
+        body, html { 
+            width: 100%; height: 100%; 
+            background: #000; 
+            overflow: hidden; 
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
         video {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Растягивает видео на весь экран */
+            object-fit: cover; /* Растягивает на весь экран */
         }
     </style>
 </head>
 <body>
 
-<div class="camera-container">
-    <video id="video" autoplay muted playsinline loop>
-        <source src="https://rtmp.inforkom-relant.ru/live/camera50.m3u8" type="application/x-mpegURL">
-        Ваш браузер не поддерживает видео.
-    </video>
-</div>
+    <video id="video" autoplay muted playsinline></video>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script>
-    let tg = window.Telegram.WebApp;
-    tg.expand();
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
 
-    // Настройка плеера для работы HLS (потокового видео) во всех браузерах
-    var video = document.getElementById('video');
-    var videoSrc = 'https://rtmp.inforkom-relant.ru/live/camera50.m3u8'; // Ссылка на поток
+        const video = document.getElementById('video');
+        // Ссылка на живой поток (m3u8). Сейчас стоит тестовая камера.
+        const videoSrc = 'https://rtmp.inforkom-relant.ru/live/camera50.m3u8';
 
-    if (Hls.isSupported()) {
-        var hls = new Hls();
-        hls.loadSource(videoSrc);
-        hls.attachMedia(video);
-    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = videoSrc;
-    }
-</script>
+        if (Hls.isSupported()) {
+            const hls = new Hls();
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                video.play();
+            });
+        } 
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Для Safari (iPhone/Mac), где HLS поддерживается нативно
+            video.src = videoSrc;
+            video.addEventListener('loadedmetadata', function() {
+                video.play();
+            });
+        }
 
+        // Если видео не запустилось само (политика браузеров), запускаем по тапу
+        document.body.onclick = () => {
+            video.play();
+        };
+    </script>
 </body>
 </html>
