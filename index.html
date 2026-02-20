@@ -3,55 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Live Camera</title>
+    <title>Live Cam</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Убираем все отступы и прокрутку */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background-color: black; }
-
-        .video-container {
-            position: relative;
+        * { margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; background: #000; overflow: hidden; }
+        
+        /* Контейнер для видео */
+        .camera-container {
             width: 100%;
             height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* Растягиваем плеер на весь экран */
-        iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
+        video {
             width: 100%;
             height: 100%;
-            border: none;
-        }
-
-        /* Слой поверх видео, чтобы нельзя было случайно нажать на кнопки ютуба */
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            z-index: 10;
+            object-fit: cover; /* Растягивает видео на весь экран */
         }
     </style>
 </head>
 <body>
-    <div class="video-container">
-        <iframe 
-            src="https://www.youtube.com/embed/1-iS7LArMPA?autoplay=1&mute=1&controls=0&rel=0&showinfo=0&modestbranding=1" 
-            allow="autoplay; encrypted-media" 
-            allowfullscreen>
-        </iframe>
-        <div class="overlay"></div>
-    </div>
 
-    <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем на максимум
-        tg.ready();
-    </script>
+<div class="camera-container">
+    <video id="video" autoplay muted playsinline loop>
+        <source src="https://rtmp.inforkom-relant.ru/live/camera50.m3u8" type="application/x-mpegURL">
+        Ваш браузер не поддерживает видео.
+    </video>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+    let tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // Настройка плеера для работы HLS (потокового видео) во всех браузерах
+    var video = document.getElementById('video');
+    var videoSrc = 'https://rtmp.inforkom-relant.ru/live/camera50.m3u8'; // Ссылка на поток
+
+    if (Hls.isSupported()) {
+        var hls = new Hls();
+        hls.loadSource(videoSrc);
+        hls.attachMedia(video);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = videoSrc;
+    }
+</script>
+
 </body>
 </html>
