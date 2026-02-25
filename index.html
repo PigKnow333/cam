@@ -2,59 +2,142 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Live Cam</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio-to-Knowledge 2.0</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <style>
-        * { margin: 0; padding: 0; }
-        body, html { 
-            width: 100%; height: 100%; 
-            background: #000; 
-            overflow: hidden; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        :root {
+            --tg-theme-bg-color: #fff;
+            --tg-theme-text-color: #000;
+            --tg-theme-button-color: #3390ec;
+            --tg-theme-button-text-color: #fff;
+            --tg-theme-hint-color: #707579;
         }
-        video {
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .header h1 { font-size: 20px; margin: 0; }
+        .header p { font-size: 14px; color: var(--tg-theme-hint-color); }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label { font-weight: bold; font-size: 14px; }
+
+        select, textarea {
             width: 100%;
-            height: 100%;
-            object-fit: cover; /* Растягивает на весь экран */
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        textarea { height: 200px; resize: none; }
+
+        .btn-container {
+            position: sticky;
+            bottom: 15px;
+            margin-top: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:active { opacity: 0.8; }
+
+        .copy-area {
+            display: none;
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-    <video id="video" autoplay muted playsinline></video>
+    <div class="header">
+        <h1>🎙 Audio-to-Knowledge</h1>
+        <p>Генератор системного промпта v2.0</p>
+    </div>
+
+    <div class="form-group">
+        <label>Выберите роль:</label>
+        <select id="role">
+            <option value="УЧЕНИК">🎓 Ученик</option>
+            <option value="РЕПЕТИТОР">👨‍🏫 Репетитор</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Текст транскрипции:</label>
+        <textarea id="text" placeholder="Вставьте сюда текст из аудио..."></textarea>
+    </div>
+
+    <div class="btn-container">
+        <button id="send">Сформировать и отправить</button>
+    </div>
+
+    <div id="result" class="copy-area"></div>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Развернуть на весь экран
 
-        const video = document.getElementById('video');
-        // Ссылка на живой поток (m3u8). Сейчас стоит тестовая камера.
-        const videoSrc = 'https://rtmp.inforkom-relant.ru/live/camera50.m3u8';
+        const btn = document.getElementById('send');
+        const roleSelect = document.getElementById('role');
+        const textArea = document.getElementById('text');
 
-        if (Hls.isSupported()) {
-            const hls = new Hls();
-            hls.loadSource(videoSrc);
-            hls.attachMedia(video);
-            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                video.play();
-            });
-        } 
-        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Для Safari (iPhone/Mac), где HLS поддерживается нативно
-            video.src = videoSrc;
-            video.addEventListener('loadedmetadata', function() {
-                video.play();
-            });
-        }
+        btn.onclick = function() {
+            const role = roleSelect.value;
+            const text = textArea.value;
 
-        // Если видео не запустилось само (политика браузеров), запускаем по тапу
-        document.body.onclick = () => {
-            video.play();
+            if (!text) {
+                alert("Пожалуйста, введите текст!");
+                return;
+            }
+
+            // Формируем финальный промпт
+            const finalPrompt = `СИСТЕМНЫЙ ПРОМПТ: AUDIO-TO-KNOWLEDGE (ВЕРСИЯ 2.0)
+РОЛЬ ПОЛЬЗОВАТЕЛЯ: ${role}
+ТЕКСТ ТРАНСКРИПЦИИ: ${text}`;
+
+            // Отправляем данные обратно в бота
+            tg.sendData(finalPrompt); 
+            // Закрываем WebApp (опционально)
+            tg.close();
         };
     </script>
 </body>
